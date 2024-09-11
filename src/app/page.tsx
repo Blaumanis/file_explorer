@@ -29,24 +29,36 @@ const HomePage = () => {
   const [newFileName, setNewFileName] = useState('')
   const [targetDirPath, setTargetDirPath] = useState<string>('root')
 
-  // fetching data on intial render from API endpoint
-  useEffect(() => {
-    const fetchFileData = async () => {
-      try {
-        const response = await axios.get<ApiResponse>(
-          'https://ab-file-explorer.athleticnext.workers.dev/?file=regular'
-        )
-        // passing data trough the utility function to sort in the right structure
-        const structuredData = structureFilePaths(response.data.filepaths)
-        setFileTree(structuredData)
-      } catch (err) {
-        setError('Failed to load file paths.')
-      } finally {
-        setLoading(false)
-      }
+  // Fetch file data from API if not available in local storage
+  const fetchFileData = async () => {
+    try {
+      const response = await axios.get<ApiResponse>(
+        'https://ab-file-explorer.athleticnext.workers.dev/?file=regular'
+      )
+      const structuredData = structureFilePaths(response.data.filepaths)
+      setFileTree(structuredData)
+      localStorage.setItem('fileTree', JSON.stringify(structuredData))
+      setLoading(false) // Ensure loading is set to false after data is fetched
+    } catch (err) {
+      setError('Failed to load file paths.')
+      setLoading(false) // Ensure loading is set to false on error as well
     }
+  }
 
-    fetchFileData()
+  // Function to save file tree to local storage
+  const saveFileTreeToLocalStorage = (fileTree: FileNode[]) => {
+    localStorage.setItem('fileTree', JSON.stringify(fileTree))
+  }
+
+  // Load file tree from local storage on initial render
+  useEffect(() => {
+    const savedFileTree = localStorage.getItem('fileTree')
+    if (savedFileTree) {
+      setFileTree(JSON.parse(savedFileTree))
+      setLoading(false) // Make sure to set loading to false if data is available
+    } else {
+      fetchFileData()
+    }
   }, [])
 
   // Function to add a new folder to the correct path within the file tree
@@ -92,13 +104,16 @@ const HomePage = () => {
     if (targetDirPath !== 'root') {
       // Add folder to the correct target directory
       const updatedTree = addFolder(targetDirPath, fileTree, newFolderName)
-      setFileTree(updatedTree)
+      setFileTree(updatedTree as FileNode[])
+      saveFileTreeToLocalStorage(updatedTree) // Save to local storage
     } else {
       // Add folder directly under the root
-      setFileTree([
+      const updatedTree = [
         ...fileTree,
         { type: 'directory', name: newFolderName, children: [] },
-      ])
+      ]
+      setFileTree(updatedTree as FileNode[])
+      saveFileTreeToLocalStorage(updatedTree as FileNode[]) // Save to local storage
     }
     resetFolderCreationState()
   }
@@ -150,12 +165,15 @@ const HomePage = () => {
       // Add file to the correct target directory
       const updatedTree = addFile(targetDirPath, fileTree, newFileName)
       setFileTree(updatedTree)
+      saveFileTreeToLocalStorage(updatedTree) // Save to local storage
     } else {
       // Add file directly under the root
-      setFileTree([
+      const updatedTree = [
         ...fileTree,
         { type: 'file', name: newFileName, children: [] },
-      ])
+      ]
+      setFileTree(updatedTree as FileNode[])
+      saveFileTreeToLocalStorage(updatedTree as FileNode[]) // Save to local storage
     }
     resetFileCreationState()
   }
@@ -221,6 +239,7 @@ const HomePage = () => {
     // Update the file tree after deletion
     const updatedTree = deleteNode(fileTree, path)
     setFileTree(updatedTree)
+    saveFileTreeToLocalStorage(updatedTree) // Save to local storage
   }
 
   if (loading) return <p>Loading...</p>
