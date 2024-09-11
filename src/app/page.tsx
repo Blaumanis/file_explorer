@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import FileExplorer from '@/components/FileExplorer'
 import { structureFilePaths } from '@/utils/structureFilePaths'
+import CreateButton from '@/components/CreateButton'
 
 // Assuming this is the response structure
 interface ApiResponse {
@@ -26,12 +27,14 @@ const HomePage = () => {
   const [newFolderName, setNewFolderName] = useState('')
   const [targetDirPath, setTargetDirPath] = useState<string>('root')
 
+  // fetching data on intial render from API endpoint
   useEffect(() => {
     const fetchFileData = async () => {
       try {
         const response = await axios.get<ApiResponse>(
           'https://ab-file-explorer.athleticnext.workers.dev/?file=regular'
         )
+        // passing data trough the utility function to sort in the right structure
         const structuredData = structureFilePaths(response.data.filepaths)
         setFileTree(structuredData)
       } catch (err) {
@@ -48,17 +51,15 @@ const HomePage = () => {
   const addFolder = (
     targetPath: string, // Path where the new folder should be added (e.g., 'src/commands')
     nodes: FileNode[], // Current list of file nodes at the current level
-    folderName: string // Name of the new folder to be added
+    folderName: string, // Name of the new folder to be added
+    currentPath = '' // Current path traversal, defaults to the root
   ): FileNode[] => {
     return nodes.map((node) => {
-      // Construct the current path of the node
-      const currentPath = `${
-        // targetPath === 'root' ? node.name : `${targetPath}/${node.name}`
-        targetPath === 'root' ? node.name : `${targetPath}`
-      }`
+      // Construct the full path for the current node
+      const fullPath = currentPath ? `${currentPath}/${node.name}` : node.name
 
-      // Check if the current node's path matches the target path where we want to add the new folder
-      if (node.type === 'directory' && currentPath === targetPath) {
+      // If current node is a directory and matches the target path
+      if (node.type === 'directory' && fullPath === targetPath) {
         // Add the new folder inside the matching directory
         return {
           ...node,
@@ -71,45 +72,18 @@ const HomePage = () => {
         }
       }
 
-      // If the current node has children, continue the recursion deeper
-      if (node.children) {
+      // If node has children, recursively continue to add the folder deeper
+      if (node.type === 'directory' && node.children) {
         return {
           ...node,
-          children: addFolder(targetPath, node.children, folderName),
+          children: addFolder(targetPath, node.children, folderName, fullPath),
         }
       }
 
-      // Return the node unchanged if it's not a directory or if it's not the target directory
+      // Return the node unchanged if it's not the target directory
       return node
     })
   }
-
-  // const addFolder = (
-  //   path: string,
-  //   nodes: FileNode[],
-  //   folderName: string
-  // ): FileNode[] => {
-  //   return nodes.map((node) => {
-  //     // if (node.type === 'directory' && `${path}/${node.name}` == path) {
-  //     if (node.type === 'directory' && `${path}` == path) {
-  //       return {
-  //         ...node,
-  //         children: node.children
-  //           ? [
-  //               ...node.children,
-  //               { type: 'directory', name: folderName, children: [] },
-  //             ]
-  //           : [],
-  //       }
-  //     }
-
-  //     if (node.children) {
-  //       return { ...node, children: addFolder(path, node.children, folderName) }
-  //     }
-
-  //     return node
-  //   })
-  // }
 
   // Toggle creating folder state
   const handleCreateFolder = () => {
@@ -129,7 +103,7 @@ const HomePage = () => {
         { type: 'directory', name: newFolderName, children: [] },
       ])
     }
-    // resetCreationState()
+    resetCreationState()
   }
 
   // Reset state after folder creation
@@ -138,15 +112,26 @@ const HomePage = () => {
     setNewFolderName('')
   }
 
-  console.log(targetDirPath)
-
   if (loading) return <p>Loading...</p>
   if (error) return <p>Error: {error}</p>
 
   return (
-    <div>
-      <h1>File Explorer</h1>
-      <button onClick={() => handleCreateFolder()}>➕ Create Folder</button>
+    <main className='p-2 w-[300px]'>
+      <div className='flex items-center gap-[3px] bg-slate-200 p-[2px] justify-between'>
+        <h1 className=''>FILE_EXPLORER</h1>
+        <div>
+          <CreateButton
+            title='New Folder...'
+            id='folder'
+            func={handleCreateFolder}
+          />
+          <CreateButton
+            title='New File...'
+            id='file'
+            func={handleCreateFolder}
+          />
+        </div>
+      </div>
       <FileExplorer
         fileTree={fileTree}
         isCreatingFolder={isCreatingFolder}
@@ -156,7 +141,7 @@ const HomePage = () => {
         targetDirPath={targetDirPath}
         setTargetDirPath={setTargetDirPath}
       />
-    </div>
+    </main>
   )
 }
 

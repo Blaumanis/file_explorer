@@ -32,6 +32,7 @@ interface FileNode {
   children?: FileNode[]
 }
 
+// types for component arguments/props
 interface FileExplorerProps {
   fileTree: FileNode[]
   isCreatingFolder: boolean
@@ -53,6 +54,9 @@ const FileExplorer: FC<FileExplorerProps> = ({
 }) => {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
 
+  console.log(expanded)
+
+  //   function for expanding the folders
   const toggleExpand = (path: string) => {
     const isCurrentlyExpanded = expanded[path]
     if (!isCurrentlyExpanded) {
@@ -66,6 +70,7 @@ const FileExplorer: FC<FileExplorerProps> = ({
     setExpanded((prev) => ({ ...prev, [path]: !prev[path] }))
   }
 
+  //   function for rendering fileTree in right structure and with right icons
   const renderNode = (node: FileNode, path: string) => {
     const extension = node.name.split('.').pop()
     const isOpen = expanded[path] || false
@@ -99,13 +104,14 @@ const FileExplorer: FC<FileExplorerProps> = ({
             )}
             {isCreatingFolder && targetDirPath === path && (
               <li>
+                📁
                 <input
                   type='text'
                   value={newFolderName}
                   onChange={(e) => setNewFolderName(e.target.value)}
                   placeholder='Enter folder name'
                   onKeyPress={(e) => e.key === 'Enter' && handleAddFolder()}
-                  className='text-black placeholder:text-black focus:outline-none px-[5px]'
+                  className='text-black placeholder:text-black px-[5px] py-[1px] text-[14px]'
                   autoFocus
                 />
               </li>
@@ -119,9 +125,12 @@ const FileExplorer: FC<FileExplorerProps> = ({
   return (
     <div>
       <ul>
+        {/* whole file tree rendered */}
         {fileTree.map((node) => renderNode(node, node.name))}
+        {/* separete input field when creating file or folder inside root dir */}
         {isCreatingFolder && targetDirPath === 'root' && (
           <li>
+            📁
             <input
               type='text'
               value={newFolderName}
@@ -129,7 +138,7 @@ const FileExplorer: FC<FileExplorerProps> = ({
               placeholder='Enter folder name'
               onKeyPress={(e) => e.key === 'Enter' && handleAddFolder()}
               autoFocus
-              className='text-black placeholder:text-black'
+              className='text-black placeholder:text-black px-[5px] py-[1px] text-[14px]'
             />
           </li>
         )}
