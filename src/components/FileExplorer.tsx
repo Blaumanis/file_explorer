@@ -39,8 +39,14 @@ interface FileExplorerProps {
   newFolderName: string
   setNewFolderName: (name: string) => void
   handleAddFolder: () => void
+  handleAddFile: () => void
+  newFileName: string
+  setNewFileName: (name: string) => void
+  isCreatingFile: boolean
   targetDirPath: string
   setTargetDirPath: Dispatch<SetStateAction<string>>
+  clearCreationState: () => void
+  handleDelete: (path: string) => void
 }
 
 const FileExplorer: FC<FileExplorerProps> = ({
@@ -49,24 +55,34 @@ const FileExplorer: FC<FileExplorerProps> = ({
   newFolderName,
   setNewFolderName,
   handleAddFolder,
+  isCreatingFile,
+  newFileName,
+  setNewFileName,
   setTargetDirPath,
   targetDirPath,
+  handleAddFile,
+  clearCreationState,
+  handleDelete,
 }) => {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
 
-  console.log(expanded)
-
   //   function for expanding the folders
-  const toggleExpand = (path: string) => {
+  const toggleExpand = (path: string, isDirectory: boolean) => {
+    // clear states for folder or file creating when expanding folders
+    clearCreationState()
+
     const isCurrentlyExpanded = expanded[path]
-    if (!isCurrentlyExpanded) {
+
+    // Only set targetDirPath if it's a directory
+    if (isDirectory && !isCurrentlyExpanded) {
       setTargetDirPath(path)
-    } else {
+    } else if (isDirectory) {
       const parentPath = path.substring(0, path.lastIndexOf('/')) || 'root'
       if (targetDirPath.startsWith(path)) {
         setTargetDirPath(parentPath)
       }
     }
+
     setExpanded((prev) => ({ ...prev, [path]: !prev[path] }))
   }
 
@@ -74,24 +90,33 @@ const FileExplorer: FC<FileExplorerProps> = ({
   const renderNode = (node: FileNode, path: string) => {
     const extension = node.name.split('.').pop()
     const isOpen = expanded[path] || false
-    const icon =
-      node.type === 'directory'
-        ? isOpen
-          ? icons['directoryOpen']
-          : icons['directoryClosed']
-        : icons[`.${extension}`] || icons[node.name] || icons['file']
+    const isDirectory = node.type === 'directory'
 
-    const arrowIcon =
-      node.type === 'directory'
-        ? isOpen
-          ? icons['downArrow']
-          : icons['rightArrow']
-        : ''
+    const icon = isDirectory
+      ? isOpen
+        ? icons['directoryOpen']
+        : icons['directoryClosed']
+      : icons[`.${extension}`] || icons[node.name] || icons['file']
+
+    const arrowIcon = isDirectory
+      ? isOpen
+        ? icons['downArrow']
+        : icons['rightArrow']
+      : ''
+
+    // Handle right-click to delete
+    const handleRightClick = (event: React.MouseEvent, path: string) => {
+      event.preventDefault() // Prevent default context menu
+      if (window.confirm(`Are you sure you want to delete ${path}?`)) {
+        handleDelete(path)
+      }
+    }
 
     return (
       <li key={path}>
         <span
-          onClick={() => toggleExpand(path)}
+          onClick={() => toggleExpand(path, isDirectory)}
+          onContextMenu={(e) => handleRightClick(e, path)}
           style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
         >
           {arrowIcon} {icon} {node.name}
@@ -102,15 +127,25 @@ const FileExplorer: FC<FileExplorerProps> = ({
             {node.children?.map((child) =>
               renderNode(child, `${path}/${child.name}`)
             )}
-            {isCreatingFolder && targetDirPath === path && (
+            {(isCreatingFolder || isCreatingFile) && targetDirPath === path && (
               <li>
-                📁
+                {isCreatingFolder ? '📁' : '📄'}
                 <input
                   type='text'
-                  value={newFolderName}
-                  onChange={(e) => setNewFolderName(e.target.value)}
-                  placeholder='Enter folder name'
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddFolder()}
+                  value={isCreatingFolder ? newFolderName : newFileName}
+                  onChange={
+                    (e) =>
+                      isCreatingFolder
+                        ? setNewFolderName(e.target.value) // Change handler for folder creation
+                        : setNewFileName(e.target.value) // Change handler for file creation
+                  }
+                  placeholder={
+                    isCreatingFolder ? 'Enter folder name' : 'Enter file name'
+                  }
+                  onKeyPress={(e) =>
+                    e.key === 'Enter' &&
+                    (isCreatingFolder ? handleAddFolder() : handleAddFile())
+                  }
                   className='text-black placeholder:text-black px-[5px] py-[1px] text-[14px]'
                   autoFocus
                 />
@@ -128,17 +163,27 @@ const FileExplorer: FC<FileExplorerProps> = ({
         {/* whole file tree rendered */}
         {fileTree.map((node) => renderNode(node, node.name))}
         {/* separete input field when creating file or folder inside root dir */}
-        {isCreatingFolder && targetDirPath === 'root' && (
+        {(isCreatingFolder || isCreatingFile) && targetDirPath === 'root' && (
           <li>
-            📁
+            {isCreatingFolder ? '📁' : '📄'}
             <input
               type='text'
-              value={newFolderName}
-              onChange={(e) => setNewFolderName(e.target.value)}
-              placeholder='Enter folder name'
-              onKeyPress={(e) => e.key === 'Enter' && handleAddFolder()}
-              autoFocus
+              value={isCreatingFolder ? newFolderName : newFileName}
+              onChange={
+                (e) =>
+                  isCreatingFolder
+                    ? setNewFolderName(e.target.value) // Change handler for folder creation
+                    : setNewFileName(e.target.value) // Change handler for file creation
+              }
+              placeholder={
+                isCreatingFolder ? 'Enter folder name' : 'Enter file name'
+              }
+              onKeyPress={(e) =>
+                e.key === 'Enter' &&
+                (isCreatingFolder ? handleAddFolder() : handleAddFile())
+              }
               className='text-black placeholder:text-black px-[5px] py-[1px] text-[14px]'
+              autoFocus
             />
           </li>
         )}
