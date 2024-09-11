@@ -5,6 +5,8 @@ import axios from 'axios'
 import FileExplorer from '@/components/FileExplorer'
 import { structureFilePaths } from '@/utils/structureFilePaths'
 import CreateButton from '@/components/CreateButton'
+import { ChevronRightIcon, ChevronDownIcon } from '@/icons/icons'
+import Modal from '@/components/Modal'
 
 // Assuming this is the response structure
 interface ApiResponse {
@@ -28,6 +30,8 @@ const HomePage = () => {
   const [isCreatingFile, setIsCreatingFile] = useState(false)
   const [newFileName, setNewFileName] = useState('')
   const [targetDirPath, setTargetDirPath] = useState<string>('root')
+
+  const [isShowingFileTree, setIsShowingFileTree] = useState(false)
 
   // Fetch file data from API if not available in local storage
   const fetchFileData = async () => {
@@ -242,37 +246,65 @@ const HomePage = () => {
     saveFileTreeToLocalStorage(updatedTree) // Save to local storage
   }
 
-  if (loading) return <p>Loading...</p>
-  if (error) return <p>Error: {error}</p>
+  const handleCollapseFileExplorer = () => {
+    setIsShowingFileTree(!isShowingFileTree)
+    setIsCreatingFolder(false)
+    setIsCreatingFile(false)
+  }
+
+  // Only show the Modal if there's a loading or error state
+  if (loading || error) {
+    return <Modal loading={loading} error={error} />
+  }
 
   return (
-    <main className='p-2 w-[300px]'>
-      <div className='flex items-center gap-[3px] bg-slate-200 p-[2px] justify-between'>
-        <h1 className=''>FILE_EXPLORER</h1>
-        <div>
-          <CreateButton
-            title='New Folder...'
-            id='folder'
-            func={handleCreateFolder}
-          />
-          <CreateButton title='New File...' id='file' func={handleCreateFile} />
-        </div>
+    <main className='w-[300px]'>
+      <div className='flex items-center justify-between bg-slate-200 w-full px-[5px] rounded-tr-md'>
+        <h1
+          onClick={() => handleCollapseFileExplorer()}
+          className='text-[20px] flex items-center cursor-pointer'
+        >
+          {isShowingFileTree ? (
+            <ChevronDownIcon fill='#202020' />
+          ) : (
+            <ChevronRightIcon fill='#202020' />
+          )}
+          FILE_EXPLORER
+        </h1>
+        {/* button group */}
+        {isShowingFileTree ? (
+          <div className='flex gap-[5px]'>
+            <CreateButton
+              title='New Folder...'
+              id='folder'
+              func={handleCreateFolder}
+            />
+            <CreateButton
+              title='New File...'
+              id='file'
+              func={handleCreateFile}
+            />
+          </div>
+        ) : null}
+        {/*  */}
       </div>
-      <FileExplorer
-        fileTree={fileTree}
-        isCreatingFolder={isCreatingFolder}
-        newFolderName={newFolderName}
-        setNewFolderName={setNewFolderName}
-        handleAddFolder={handleAddFolder}
-        targetDirPath={targetDirPath}
-        setTargetDirPath={setTargetDirPath}
-        newFileName={newFileName}
-        setNewFileName={setNewFileName}
-        isCreatingFile={isCreatingFile}
-        handleAddFile={handleAddFile}
-        clearCreationState={clearCreationState}
-        handleDelete={handleDelete}
-      />
+      {isShowingFileTree ? (
+        <FileExplorer
+          fileTree={fileTree}
+          isCreatingFolder={isCreatingFolder}
+          newFolderName={newFolderName}
+          setNewFolderName={setNewFolderName}
+          handleAddFolder={handleAddFolder}
+          targetDirPath={targetDirPath}
+          setTargetDirPath={setTargetDirPath}
+          newFileName={newFileName}
+          setNewFileName={setNewFileName}
+          isCreatingFile={isCreatingFile}
+          handleAddFile={handleAddFile}
+          clearCreationState={clearCreationState}
+          handleDelete={handleDelete}
+        />
+      ) : null}
     </main>
   )
 }

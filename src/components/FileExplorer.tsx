@@ -1,28 +1,42 @@
 'use client'
-import { Dispatch, FC, SetStateAction, useState } from 'react'
+import { Dispatch, FC, SetStateAction, useEffect, useState } from 'react'
+import InputField from './InputField'
+
+import { BiLogoTypescript } from 'react-icons/bi'
+import { SiGitignoredotio } from 'react-icons/si'
+import { TbSourceCode } from 'react-icons/tb'
+import { FaReadme } from 'react-icons/fa'
+
+import {
+  ChevronRightIcon,
+  ChevronDownIcon,
+  FileIcon,
+  FolderOpenIcon,
+  FolderCloseIcon,
+} from '@/icons/icons'
 
 // Define icons for specific files and directories
-const icons: Record<string, string> = {
-  directoryClosed: '📁',
-  directoryOpen: '📂',
-  file: '📄',
+const icons: Record<string, React.ReactNode> = {
+  directoryClosed: <FolderCloseIcon fill='#fff' />,
+  directoryOpen: <FolderOpenIcon fill='#fff' />,
+  file: <FileIcon fill='#fff' />,
   '.editorconfig': '⚙️',
-  '.gitignore': '🔒',
+  '.gitignore': <SiGitignoredotio />,
   '.idea/vcs.xml': '📝',
   '.prettierrc': '🛠️',
-  'README.md': '📘',
+  'README.md': <FaReadme />,
   'bin/run': '⚙️',
   'bin/run.cmd': '⚙️',
   'package.json': '📦',
-  src: '📂',
+  src: <TbSourceCode />,
   'tsconfig.json': '🗃️',
   'tsconfig.tsbuildinfo': '🗃️',
   'yarn-error.log': '⚠️',
   'yarn.lock': '🔒',
   '.js': '🟨',
-  '.ts': '🔷',
-  rightArrow: '▶',
-  downArrow: '▼',
+  '.ts': <BiLogoTypescript />,
+  rightArrow: <ChevronRightIcon fill='#fff' />,
+  downArrow: <ChevronDownIcon fill='#fff' />,
 }
 
 // Types for FileNode
@@ -113,43 +127,29 @@ const FileExplorer: FC<FileExplorerProps> = ({
     }
 
     return (
-      <li key={path}>
+      <li className='text-[#fff] py-[4px]' key={path}>
         <span
           onClick={() => toggleExpand(path, isDirectory)}
           onContextMenu={(e) => handleRightClick(e, path)}
-          style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+          className='fileItem cursor-pointer flex items-center gap-[4px]'
         >
           {arrowIcon} {icon} {node.name}
         </span>
 
         {isOpen && (
-          <ul style={{ paddingLeft: '20px' }}>
+          //   <ul className='pl-[25px] flex gap-[10px] flex-col'>
+          <ul className='pl-[20px]'>
             {node.children?.map((child) =>
               renderNode(child, `${path}/${child.name}`)
             )}
             {(isCreatingFolder || isCreatingFile) && targetDirPath === path && (
-              <li>
-                {isCreatingFolder ? '📁' : '📄'}
-                <input
-                  type='text'
-                  value={isCreatingFolder ? newFolderName : newFileName}
-                  onChange={
-                    (e) =>
-                      isCreatingFolder
-                        ? setNewFolderName(e.target.value) // Change handler for folder creation
-                        : setNewFileName(e.target.value) // Change handler for file creation
-                  }
-                  placeholder={
-                    isCreatingFolder ? 'Enter folder name' : 'Enter file name'
-                  }
-                  onKeyPress={(e) =>
-                    e.key === 'Enter' &&
-                    (isCreatingFolder ? handleAddFolder() : handleAddFile())
-                  }
-                  className='text-black placeholder:text-black px-[5px] py-[1px] text-[14px]'
-                  autoFocus
-                />
-              </li>
+              <InputField
+                isCreatingFolder={isCreatingFolder}
+                newFolderName={newFolderName}
+                newFileName={newFileName}
+                handleInputChange={handleInputChange}
+                handleOnKeyPress={handleOnKeyPress}
+              />
             )}
           </ul>
         )}
@@ -157,35 +157,30 @@ const FileExplorer: FC<FileExplorerProps> = ({
     )
   }
 
+  const handleInputChange = (e: any) => {
+    isCreatingFolder
+      ? setNewFolderName(e.target.value) // Change handler for folder creation
+      : setNewFileName(e.target.value) // Change handler for file creation
+  }
+
+  const handleOnKeyPress = () => {
+    isCreatingFolder ? handleAddFolder() : handleAddFile()
+  }
+
   return (
     <div>
-      <ul>
+      <ul className='px-[5px] py-[10px] rounded-br-md bg-[#202020]'>
         {/* whole file tree rendered */}
         {fileTree.map((node) => renderNode(node, node.name))}
         {/* separete input field when creating file or folder inside root dir */}
         {(isCreatingFolder || isCreatingFile) && targetDirPath === 'root' && (
-          <li>
-            {isCreatingFolder ? '📁' : '📄'}
-            <input
-              type='text'
-              value={isCreatingFolder ? newFolderName : newFileName}
-              onChange={
-                (e) =>
-                  isCreatingFolder
-                    ? setNewFolderName(e.target.value) // Change handler for folder creation
-                    : setNewFileName(e.target.value) // Change handler for file creation
-              }
-              placeholder={
-                isCreatingFolder ? 'Enter folder name' : 'Enter file name'
-              }
-              onKeyPress={(e) =>
-                e.key === 'Enter' &&
-                (isCreatingFolder ? handleAddFolder() : handleAddFile())
-              }
-              className='text-black placeholder:text-black px-[5px] py-[1px] text-[14px]'
-              autoFocus
-            />
-          </li>
+          <InputField
+            isCreatingFolder={isCreatingFolder}
+            newFolderName={newFolderName}
+            newFileName={newFileName}
+            handleInputChange={handleInputChange}
+            handleOnKeyPress={handleOnKeyPress}
+          />
         )}
       </ul>
     </div>
