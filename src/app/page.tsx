@@ -7,19 +7,9 @@ import { structureFilePaths } from '@/utils/structureFilePaths'
 import CreateButton from '@/components/CreateButton'
 import { ChevronRightIcon, ChevronDownIcon } from '@/icons/icons'
 import Modal from '@/components/Modal'
+import Title from '@/components/Title'
 
-// Assuming this is the response structure
-interface ApiResponse {
-  name: string
-  filepaths: string[]
-}
-
-// Ensure correct FileNode typing
-interface FileNode {
-  type: 'file' | 'directory'
-  name: string
-  children?: FileNode[]
-}
+import { FileNode, ApiResponse } from '@/utils/types'
 
 const HomePage = () => {
   const [fileTree, setFileTree] = useState<FileNode[]>([])
@@ -37,13 +27,14 @@ const HomePage = () => {
   const fetchFileData = async () => {
     try {
       const response = await axios.get<ApiResponse>(
-        'https://ab-file-explorer.athleticnext.workers.dev/?file=regular'
+        'https://ab-file-explorer.athleticnext.workers.dev/?file=regular123'
       )
       const structuredData = structureFilePaths(response.data.filepaths)
       setFileTree(structuredData)
       localStorage.setItem('fileTree', JSON.stringify(structuredData))
       setLoading(false) // Ensure loading is set to false after data is fetched
     } catch (err) {
+      console.log(err)
       setError('Failed to load file paths.')
       setLoading(false) // Ensure loading is set to false on error as well
     }
@@ -260,18 +251,10 @@ const HomePage = () => {
   return (
     <main className='w-[300px]'>
       <div className='flex items-center justify-between bg-slate-200 w-full px-[5px] rounded-tr-md'>
-        <h1
-          onClick={() => handleCollapseFileExplorer()}
-          className='text-[20px] flex items-center cursor-pointer'
-        >
-          {isShowingFileTree ? (
-            <ChevronDownIcon fill='#202020' />
-          ) : (
-            <ChevronRightIcon fill='#202020' />
-          )}
-          FILE_EXPLORER
-        </h1>
-        {/* button group */}
+        <Title
+          func={handleCollapseFileExplorer}
+          isShowingFileTree={isShowingFileTree}
+        />
         {isShowingFileTree ? (
           <div className='flex gap-[5px]'>
             <CreateButton
@@ -286,7 +269,6 @@ const HomePage = () => {
             />
           </div>
         ) : null}
-        {/*  */}
       </div>
       {isShowingFileTree ? (
         <FileExplorer

@@ -1,4 +1,5 @@
 import React, { FC } from 'react'
+import { FileIcon, FolderCloseIcon } from '@/icons/icons'
 
 interface InputFieldProps {
   isCreatingFolder: boolean
@@ -16,15 +17,15 @@ const InputField: FC<InputFieldProps> = ({
   handleOnKeyPress,
 }) => {
   return (
-    <li>
-      {isCreatingFolder ? '📁' : '📄'}
+    <li className='flex items-center gap-[5px]'>
+      {isCreatingFolder ? <FolderCloseIcon /> : <FileIcon />}
       <input
         type='text'
         value={isCreatingFolder ? newFolderName : newFileName}
         onChange={(e) => handleInputChange(e)}
         placeholder={isCreatingFolder ? 'Enter folder name' : 'Enter file name'}
         onKeyPress={(e) => e.key === 'Enter' && handleOnKeyPress()}
-        className='text-black placeholder:text-black px-[5px] py-[1px]'
+        className='text-black placeholder:text-black px-[5px] outline-none rounded-sm'
         autoFocus
       />
     </li>

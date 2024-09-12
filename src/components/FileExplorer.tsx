@@ -1,67 +1,11 @@
 'use client'
-import { Dispatch, FC, SetStateAction, useEffect, useState } from 'react'
+import { FC, useState } from 'react'
 import InputField from './InputField'
 
-import { BiLogoTypescript } from 'react-icons/bi'
-import { SiGitignoredotio } from 'react-icons/si'
-import { TbSourceCode } from 'react-icons/tb'
-import { FaReadme } from 'react-icons/fa'
+import icons from '@/icons/iconsList'
 
-import {
-  ChevronRightIcon,
-  ChevronDownIcon,
-  FileIcon,
-  FolderOpenIcon,
-  FolderCloseIcon,
-} from '@/icons/icons'
-
-// Define icons for specific files and directories
-const icons: Record<string, React.ReactNode> = {
-  directoryClosed: <FolderCloseIcon fill='#fff' />,
-  directoryOpen: <FolderOpenIcon fill='#fff' />,
-  file: <FileIcon fill='#fff' />,
-  '.editorconfig': '⚙️',
-  '.gitignore': <SiGitignoredotio />,
-  '.idea/vcs.xml': '📝',
-  '.prettierrc': '🛠️',
-  'README.md': <FaReadme />,
-  'bin/run': '⚙️',
-  'bin/run.cmd': '⚙️',
-  'package.json': '📦',
-  src: <TbSourceCode />,
-  'tsconfig.json': '🗃️',
-  'tsconfig.tsbuildinfo': '🗃️',
-  'yarn-error.log': '⚠️',
-  'yarn.lock': '🔒',
-  '.js': '🟨',
-  '.ts': <BiLogoTypescript />,
-  rightArrow: <ChevronRightIcon fill='#fff' />,
-  downArrow: <ChevronDownIcon fill='#fff' />,
-}
-
-// Types for FileNode
-interface FileNode {
-  type: 'file' | 'directory'
-  name: string
-  children?: FileNode[]
-}
-
-// types for component arguments/props
-interface FileExplorerProps {
-  fileTree: FileNode[]
-  isCreatingFolder: boolean
-  newFolderName: string
-  setNewFolderName: (name: string) => void
-  handleAddFolder: () => void
-  handleAddFile: () => void
-  newFileName: string
-  setNewFileName: (name: string) => void
-  isCreatingFile: boolean
-  targetDirPath: string
-  setTargetDirPath: Dispatch<SetStateAction<string>>
-  clearCreationState: () => void
-  handleDelete: (path: string) => void
-}
+// interfaces
+import { FileNode, FileExplorerProps } from '@/utils/types'
 
 const FileExplorer: FC<FileExplorerProps> = ({
   fileTree,
@@ -106,11 +50,13 @@ const FileExplorer: FC<FileExplorerProps> = ({
     const isOpen = expanded[path] || false
     const isDirectory = node.type === 'directory'
 
+    // Prioritize specific directory icons before using the default folder icons
     const icon = isDirectory
-      ? isOpen
-        ? icons['directoryOpen']
-        : icons['directoryClosed']
+      ? icons[node.name] ||
+        (isOpen ? icons['directoryOpen'] : icons['directoryClosed'])
       : icons[`.${extension}`] || icons[node.name] || icons['file']
+
+    console.log(icon)
 
     const arrowIcon = isDirectory
       ? isOpen
@@ -127,7 +73,7 @@ const FileExplorer: FC<FileExplorerProps> = ({
     }
 
     return (
-      <li className='text-[#fff] py-[4px]' key={path}>
+      <li className='text-[#fff] py-[4px] select-none' key={path}>
         <span
           onClick={() => toggleExpand(path, isDirectory)}
           onContextMenu={(e) => handleRightClick(e, path)}
@@ -137,7 +83,6 @@ const FileExplorer: FC<FileExplorerProps> = ({
         </span>
 
         {isOpen && (
-          //   <ul className='pl-[25px] flex gap-[10px] flex-col'>
           <ul className='pl-[20px]'>
             {node.children?.map((child) =>
               renderNode(child, `${path}/${child.name}`)
