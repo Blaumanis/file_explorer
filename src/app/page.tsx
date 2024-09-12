@@ -27,7 +27,7 @@ const HomePage = () => {
   const fetchFileData = async () => {
     try {
       const response = await axios.get<ApiResponse>(
-        'https://ab-file-explorer.athleticnext.workers.dev/?file=regular123'
+        'https://ab-file-explorer.athleticnext.workers.dev/?file=regular'
       )
       const structuredData = structureFilePaths(response.data.filepaths)
       setFileTree(structuredData)
