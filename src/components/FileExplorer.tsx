@@ -56,8 +56,6 @@ const FileExplorer: FC<FileExplorerProps> = ({
         (isOpen ? icons['directoryOpen'] : icons['directoryClosed'])
       : icons[`.${extension}`] || icons[node.name] || icons['file']
 
-    console.log(icon)
-
     const arrowIcon = isDirectory
       ? isOpen
         ? icons['downArrow']

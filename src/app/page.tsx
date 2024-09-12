@@ -5,7 +5,6 @@ import axios from 'axios'
 import FileExplorer from '@/components/FileExplorer'
 import { structureFilePaths } from '@/utils/structureFilePaths'
 import CreateButton from '@/components/CreateButton'
-import { ChevronRightIcon, ChevronDownIcon } from '@/icons/icons'
 import Modal from '@/components/Modal'
 import Title from '@/components/Title'
 
@@ -22,6 +21,7 @@ const HomePage = () => {
   const [targetDirPath, setTargetDirPath] = useState<string>('root')
 
   const [isShowingFileTree, setIsShowingFileTree] = useState(false)
+  const [shouldRenderFileTree, setShouldRenderFileTree] = useState(false)
 
   // Fetch file data from API if not available in local storage
   const fetchFileData = async () => {
@@ -34,7 +34,6 @@ const HomePage = () => {
       localStorage.setItem('fileTree', JSON.stringify(structuredData))
       setLoading(false) // Ensure loading is set to false after data is fetched
     } catch (err) {
-      console.log(err)
       setError('Failed to load file paths.')
       setLoading(false) // Ensure loading is set to false on error as well
     }
@@ -238,7 +237,15 @@ const HomePage = () => {
   }
 
   const handleCollapseFileExplorer = () => {
-    setIsShowingFileTree(!isShowingFileTree)
+    if (isShowingFileTree) {
+      // When collapsing, delay the state update to allow animation to play
+      setIsShowingFileTree(false)
+      setTimeout(() => setShouldRenderFileTree(false), 300) // Adjust duration to match the animation
+    } else {
+      // When opening, show immediately
+      setShouldRenderFileTree(true)
+      setTimeout(() => setIsShowingFileTree(true), 10) // Small delay to trigger animation
+    }
     setIsCreatingFolder(false)
     setIsCreatingFile(false)
   }
@@ -270,23 +277,29 @@ const HomePage = () => {
           </div>
         ) : null}
       </div>
-      {isShowingFileTree ? (
-        <FileExplorer
-          fileTree={fileTree}
-          isCreatingFolder={isCreatingFolder}
-          newFolderName={newFolderName}
-          setNewFolderName={setNewFolderName}
-          handleAddFolder={handleAddFolder}
-          targetDirPath={targetDirPath}
-          setTargetDirPath={setTargetDirPath}
-          newFileName={newFileName}
-          setNewFileName={setNewFileName}
-          isCreatingFile={isCreatingFile}
-          handleAddFile={handleAddFile}
-          clearCreationState={clearCreationState}
-          handleDelete={handleDelete}
-        />
-      ) : null}
+      <div
+        className={`overflow-hidden transform origin-top-center ${
+          isShowingFileTree ? 'openModal' : 'closeModal'
+        }`}
+      >
+        {shouldRenderFileTree ? (
+          <FileExplorer
+            fileTree={fileTree}
+            isCreatingFolder={isCreatingFolder}
+            newFolderName={newFolderName}
+            setNewFolderName={setNewFolderName}
+            handleAddFolder={handleAddFolder}
+            targetDirPath={targetDirPath}
+            setTargetDirPath={setTargetDirPath}
+            newFileName={newFileName}
+            setNewFileName={setNewFileName}
+            isCreatingFile={isCreatingFile}
+            handleAddFile={handleAddFile}
+            clearCreationState={clearCreationState}
+            handleDelete={handleDelete}
+          />
+        ) : null}
+      </div>
     </main>
   )
 }

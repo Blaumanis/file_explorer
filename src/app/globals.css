@@ -12,6 +12,7 @@
   height: 20px;
 }
 
+/* loader animation */
 .loader {
   width: 50px;
   height: 50px;
@@ -28,5 +29,42 @@
   }
   100% {
     transform: rotate(360deg);
+  }
+}
+
+/* animation for toggling file explorer */
+.openModal {
+  animation: slideDown 0.35s ease-in forwards;
+  transform-origin: top center;
+}
+
+.closeModal {
+  animation: slideUp 0.35s ease-out forwards;
+  transform-origin: top center;
+}
+
+@keyframes slideDown {
+  0% {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+  80% {
+    transform: scaleY(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  0% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleY(0);
+    opacity: 0;
   }
 }
