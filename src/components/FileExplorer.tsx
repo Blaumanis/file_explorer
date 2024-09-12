@@ -73,11 +73,11 @@ const FileExplorer: FC<FileExplorerProps> = ({
     }
 
     return (
-      <li className='text-[#fff] py-[4px] select-none' key={path}>
+      <li className='group text-[#fff] py-[4px] select-none ' key={path}>
         <span
           onClick={() => toggleExpand(path, isDirectory)}
           onContextMenu={(e) => handleRightClick(e, path)}
-          className='fileItem cursor-pointer flex items-center gap-[4px]'
+          className='fileItem cursor-pointer flex items-center gap-[4px] hover:bg-sky-700 rounded px-[2px]'
         >
           {arrowIcon} {icon} {node.name}
         </span>
